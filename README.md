@@ -3,5 +3,5 @@
 ## To start
 
 ```
-pip install -r .
+pip install -r requirements.txt
 ```

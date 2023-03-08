@@ -1,3 +1,4 @@
+pandas
 rouge-score
 keras-nlp
 tensorflow

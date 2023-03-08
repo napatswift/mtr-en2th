@@ -15,11 +15,11 @@ NUM_HEADS = 8
 
 
 class Dataset:
-    def __init__(self) -> None:
+    def __init__(self, data_path) -> None:
         self.train_pairs = None
         self.val_pairs = None
         self.test_pairs = None
-        self._build_dataset()
+        self._build_dataset(data_path)
 
         self.eng_tokenizer = keras_nlp.tokenizers.SentencePieceTokenizer(
             'spmodel/m48.model')
@@ -140,7 +140,7 @@ class ModelBuilder:
 
 
 if __name__ == '__main__':
-    dataset = Dataset()
+    dataset = Dataset('dataset/translate.csv')
     model_builder = ModelBuilder()
     model = model_builder.build_model()
 
