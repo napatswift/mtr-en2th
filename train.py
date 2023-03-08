@@ -3,19 +3,9 @@ import random
 import keras_nlp
 import tensorflow as tf
 
-BATCH_SIZE = 64
-EPOCHS = 1
-MAX_SEQUENCE_LENGTH = 40
-ENG_VOCAB_SIZE = 15000
-THA_VOCAB_SIZE = 15000
-
-EMBED_DIM = 256
-INTERMEDIATE_DIM = 2048
-NUM_HEADS = 8
-
 
 class Dataset:
-    def __init__(self, data_path) -> None:
+    def __init__(self, data_path, max_seq_len) -> None:
         self.train_pairs = None
         self.val_pairs = None
         self.test_pairs = None
@@ -27,11 +17,11 @@ class Dataset:
             'spmodel/m48.model')
 
         self.eng_start_end_packer = keras_nlp.layers.StartEndPacker(
-            sequence_length=MAX_SEQUENCE_LENGTH,
+            sequence_length=max_seq_len,
             pad_value=self.eng_tokenizer.token_to_id("<p>"),)
 
         self.tha_start_end_packer = keras_nlp.layers.StartEndPacker(
-            sequence_length=MAX_SEQUENCE_LENGTH + 1,
+            sequence_length=max_seq_len + 1,
             start_value=self.tha_tokenizer.token_to_id("<s>"),
             end_value=self.tha_tokenizer.token_to_id("</s>"),
             pad_value=self.tha_tokenizer.token_to_id("<p>"),
@@ -41,12 +31,12 @@ class Dataset:
         self.val = self.make_dataset(self.val_pairs)
         self.test = self.make_dataset(self.test_pairs)
 
-    def make_dataset(self, pairs):
+    def make_dataset(self, pairs, batch_size=128):
         eng_texts, tha_texts = zip(*pairs)
         eng_texts = list(eng_texts)
         tha_texts = list(tha_texts)
         dataset = tf.data.Dataset.from_tensor_slices((eng_texts, tha_texts))
-        dataset = dataset.batch(BATCH_SIZE)
+        dataset = dataset.batch(batch_size)
         dataset = dataset.map(self.preprocess_batch,
                               num_parallel_calls=tf.data.AUTOTUNE)
         return dataset.shuffle(2048).prefetch(16).cache()
@@ -86,20 +76,28 @@ class ModelBuilder:
     def __init__(self) -> None:
         pass
 
-    def build_model(self):
+    def build_model(
+            self,
+            source_vocab_size,
+            target_vocab_size,
+            max_sequence_length,
+            intermediate_dim=2048,
+            embedding_dim=256,
+            head_num=8,
+):
         # Encoder
         encoder_inputs = tf.keras.Input(
             shape=(None,), dtype="int64", name="encoder_inputs")
 
         x = keras_nlp.layers.TokenAndPositionEmbedding(
-            vocabulary_size=ENG_VOCAB_SIZE,
-            sequence_length=MAX_SEQUENCE_LENGTH,
-            embedding_dim=EMBED_DIM,
+            vocabulary_size=source_vocab_size,
+            sequence_length=max_sequence_length,
+            embedding_dim=embedding_dim,
             mask_zero=True,
         )(encoder_inputs)
 
         encoder_outputs = keras_nlp.layers.TransformerEncoder(
-            intermediate_dim=INTERMEDIATE_DIM, num_heads=NUM_HEADS
+            intermediate_dim=intermediate_dim, num_heads=head_num
         )(inputs=x)
         encoder = tf.keras.Model(encoder_inputs, encoder_outputs)
 
@@ -107,21 +105,21 @@ class ModelBuilder:
         decoder_inputs = tf.keras.Input(
             shape=(None,), dtype="int64", name="decoder_inputs")
         encoded_seq_inputs = tf.keras.Input(
-            shape=(None, EMBED_DIM), name="decoder_state_inputs")
+            shape=(None, embedding_dim), name="decoder_state_inputs")
 
         x = keras_nlp.layers.TokenAndPositionEmbedding(
-            vocabulary_size=THA_VOCAB_SIZE,
-            sequence_length=MAX_SEQUENCE_LENGTH,
-            embedding_dim=EMBED_DIM,
+            vocabulary_size=target_vocab_size,
+            sequence_length=max_sequence_length,
+            embedding_dim=embedding_dim,
             mask_zero=True,
         )(decoder_inputs)
 
         x = keras_nlp.layers.TransformerDecoder(
-            intermediate_dim=INTERMEDIATE_DIM, num_heads=NUM_HEADS
+            intermediate_dim=intermediate_dim, num_heads=head_num
         )(decoder_sequence=x, encoder_sequence=encoded_seq_inputs)
         x = tf.keras.layers.Dropout(0.5)(x)
         decoder_outputs = tf.keras.layers.Dense(
-            THA_VOCAB_SIZE, activation="softmax")(x)
+            target_vocab_size, activation="softmax")(x)
         decoder = tf.keras.Model([
             decoder_inputs,
             encoded_seq_inputs,
@@ -140,9 +138,12 @@ class ModelBuilder:
 
 
 if __name__ == '__main__':
-    dataset = Dataset('dataset/translate.csv')
+    max_sequence_length = 48
+    dataset = Dataset('dataset/translate.csv', max_sequence_length)
     model_builder = ModelBuilder()
-    model = model_builder.build_model()
+    eng_vocab_size = dataset.eng_tokenizer.vocabulary_size()
+    tha_vocab_size = dataset.tha_tokenizer.vocabulary_size()
+    model = model_builder.build_model(eng_vocab_size, tha_vocab_size, max_sequence_length)
 
     model.summary()
     model.compile(
