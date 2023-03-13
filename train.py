@@ -2,19 +2,24 @@ import pandas as pd
 import random
 import keras_nlp
 import tensorflow as tf
+import argparse
 
 
 class Dataset:
-    def __init__(self, data_path, max_seq_len) -> None:
+    def __init__(self,
+                 data_path,
+                 max_seq_len,
+                 sentence_piece_eng_path,
+                 sentence_piece_tha_path) -> None:
         self.train_pairs = None
         self.val_pairs = None
         self.test_pairs = None
         self._build_dataset(data_path)
 
         self.eng_tokenizer = keras_nlp.tokenizers.SentencePieceTokenizer(
-            'spmodel/m48.model')
+            sentence_piece_eng_path)
         self.tha_tokenizer = keras_nlp.tokenizers.SentencePieceTokenizer(
-            'spmodel/m48.model')
+            sentence_piece_tha_path)
 
         self.eng_start_end_packer = keras_nlp.layers.StartEndPacker(
             sequence_length=max_seq_len,
@@ -84,7 +89,7 @@ class ModelBuilder:
             intermediate_dim=2048,
             embedding_dim=256,
             head_num=8,
-):
+    ):
         # Encoder
         encoder_inputs = tf.keras.Input(
             shape=(None,), dtype="int64", name="encoder_inputs")
@@ -138,12 +143,21 @@ class ModelBuilder:
 
 
 if __name__ == '__main__':
-    max_sequence_length = 48
-    dataset = Dataset('dataset/translate.csv', max_sequence_length)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--name', default='mtr-model', type=str)
+    parser.add_argument('--max_sequence_length', default=48, type=int)
+    parser.add_argument('--sentence_piece_eng_path', default='spmodel/m48.model', type=str)
+    parser.add_argument('--sentence_piece_tha_path', default='spmodel/m48.model', type=str)
+
+    configs = parser.parse_args()
+    dataset = Dataset('dataset/translate.csv', 
+                      configs.max_sequence_length,
+                      configs.sentence_piece_eng_path,
+                      configs.sentence_piece_tha_path)
     model_builder = ModelBuilder()
     eng_vocab_size = dataset.eng_tokenizer.vocabulary_size()
     tha_vocab_size = dataset.tha_tokenizer.vocabulary_size()
-    model = model_builder.build_model(eng_vocab_size, tha_vocab_size, max_sequence_length)
+    model = model_builder.build_model(eng_vocab_size, tha_vocab_size, configs.max_sequence_length)
 
     model.summary()
     model.compile(
@@ -151,3 +165,5 @@ if __name__ == '__main__':
     )
 
     model.fit(dataset.train, epochs=10, validation_data=dataset.val)
+
+    model.save(configs.name)

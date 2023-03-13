@@ -3,3 +3,5 @@ rouge-score
 keras-nlp
 tensorflow
 tensorflow_text
+evaluate
+deepcut
