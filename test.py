@@ -1,9 +1,9 @@
 import keras_nlp
 import tensorflow as tf
-import evaluate
+# import evaluate
 import pandas as pd
 import random
-import deepcut
+# import deepcut
 
 import numpy as np
 from tensorflow import keras
@@ -11,12 +11,12 @@ from tensorflow_text.tools.wordpiece_vocab import (
     bert_vocab_from_dataset as bert_vocab,
 )
 
-model = keras.models.load_model('save/')
+model = keras.models.load_model('mtr-model/')
 meteor = evaluate.load('meteor')
 
 BATCH_SIZE = 64
 EPOCHS = 1  # This should be at least 10 for convergence
-MAX_SEQUENCE_LENGTH = 40
+MAX_SEQUENCE_LENGTH = 64
 ENG_VOCAB_SIZE = 15000
 THA_VOCAB_SIZE = 15000
 

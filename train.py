@@ -11,13 +11,14 @@ class Dataset:
                  max_seq_len,
                  sentence_piece_eng_path,
                  sentence_piece_tha_path) -> None:
-        self.train_pairs = None
-        self.val_pairs = None
-        self.test_pairs = None
-        self._build_dataset(data_path)
+
+        self.train_pairs = self._build_dataset('dataset/translate_train.csv')
+        self.val_pairs = self._build_dataset('dataset/translate_val.csv')
+        self.test_pairs = self._build_dataset('dataset/translate_test.csv')
 
         self.eng_tokenizer = keras_nlp.tokenizers.SentencePieceTokenizer(
             sentence_piece_eng_path)
+
         self.tha_tokenizer = keras_nlp.tokenizers.SentencePieceTokenizer(
             sentence_piece_tha_path)
 
@@ -61,20 +62,8 @@ class Dataset:
         )
 
     def _build_dataset(self, csv_path: str):
-        ds_df = pd.read_csv(csv_path)
-        ds_df = ds_df[ds_df['Matched?'] & (
-            ds_df.Thai != '<song title>') & (~ds_df.Thai.isna())]
-        ds_df.loc[:, 'Thai'] = ds_df.Thai.astype(str)
-        ds_df.loc[:, 'English'] = ds_df.English.astype(
-            str).apply(lambda x: x.lower())
-        text_pairs = ds_df[['English', 'Thai']].values.tolist()
-        random.shuffle(text_pairs)
-        num_val_samples = int(0.15 * len(text_pairs))
-        num_train_samples = len(text_pairs) - 2 * num_val_samples
-        self.train_pairs = text_pairs[:num_train_samples]
-        self.val_pairs = text_pairs[num_train_samples:
-                                    num_train_samples + num_val_samples]
-        self.test_pairs = text_pairs[num_train_samples + num_val_samples:]
+        ds_df = pd.read_csv(csv_path).dropna()
+        return ds_df.values
 
 
 class ModelBuilder:
@@ -145,9 +134,9 @@ class ModelBuilder:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', default='mtr-model', type=str)
-    parser.add_argument('--max_sequence_length', default=48, type=int)
-    parser.add_argument('--sentence_piece_eng_path', default='spmodel/m48.model', type=str)
-    parser.add_argument('--sentence_piece_tha_path', default='spmodel/m48.model', type=str)
+    parser.add_argument('--max_sequence_length', default=64, type=int)
+    parser.add_argument('--sentence_piece_eng_path', default='spmodel/english.model', type=str)
+    parser.add_argument('--sentence_piece_tha_path', default='spmodel/thai.model', type=str)
 
     configs = parser.parse_args()
     dataset = Dataset('dataset/translate.csv', 
@@ -161,9 +150,11 @@ if __name__ == '__main__':
 
     model.summary()
     model.compile(
-        "rmsprop", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
+        "rmsprop",
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"]
     )
 
-    model.fit(dataset.train, epochs=10, validation_data=dataset.val)
+    model.fit(dataset.train, epochs=1, validation_data=dataset.val)
 
     model.save(configs.name)
