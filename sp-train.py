@@ -22,7 +22,7 @@ def build_spmodel(lang, fpath):
   spm.SentencePieceTrainer.train(
     input=fpath,
     model_prefix=f'spmodel/{lang}',
-    vocab_size=1000,
+    vocab_size=2000,
     pad_id=3)
 
 
