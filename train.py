@@ -149,13 +149,19 @@ if __name__ == '__main__':
     tha_vocab_size = dataset.tha_tokenizer.vocabulary_size()
     model = model_builder.build_model(eng_vocab_size, tha_vocab_size, configs.max_sequence_length)
 
+    cp_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath='saved_model/'+parser.name+'/cp-{epoch:04d}.ckpt', 
+        verbose=1, 
+        save_weights_only=True,
+        save_freq=10*configs.batch_size)
+
     model.summary()
     model.compile(
         "rmsprop",
         loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"]
+        metrics=["accuracy"],
     )
 
-    model.fit(dataset.train, epochs=configs.epochs, validation_data=dataset.val)
+    model.fit(dataset.train, epochs=configs.epochs, validation_data=dataset.val, callbacks=[cp_callback])
 
     model.save(configs.name)
