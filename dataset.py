@@ -18,6 +18,8 @@ def _manootchecklist_data():
   ds_df.loc[:, 'Thai'] = ds_df.Thai.astype(str)
   ds_df.loc[:, 'English'] = ds_df.English.astype(
       str).apply(lambda x: x.lower())
+  ds_df.loc[:, 'English'] = ds_df['English'].apply(lambda x: x.lower())
+  ds_df.drop_duplicates(inplace=True)
   text_pairs = ds_df[['English', 'Thai']].values.tolist()
   random.shuffle(text_pairs)
   num_val_samples = int(0.15 * len(text_pairs))
@@ -30,7 +32,11 @@ def _manootchecklist_data():
 def _scb_mt_en_th_data():
   csv_path = 'dataset/en-th.merged_stratified.train.csv'
   ds_df = pd.read_csv(csv_path, index_col=0)
-  text_pairs = ds_df.loc[:100_000, ['en', 'th']].values.tolist()
+  ds_df = ds_df[
+    ds_df['en'].apply(lambda x: len(x) < 200) &
+    ds_df['th'].apply(lambda x: len(x) < 200)]
+  ds_df.loc[:, 'en'] = ds_df['en'].apply(lambda x: x.lower())
+  text_pairs = ds_df.loc[:50_000, ['en', 'th']].values.tolist()
   return text_pairs, [], []
 
 train_pairs = []

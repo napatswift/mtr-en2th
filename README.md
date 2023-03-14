@@ -2,6 +2,10 @@
 
 mtr-en2th is a project that uses transforms to perform machine translation of English song lyrics to Thai. This project can be useful for anyone who wants to understand the meaning of English songs in Thai, or for language learners who want to improve their English and Thai skills.
 
+## Try Now!
+
+We have a 🤗 space, you can try translate lyrics now at this
+
 ## Getting Started
 
 To get started with mtr-en2th, you will need to build a virtual environment using venv. This will ensure that you have a clean and isolated environment to work with, and that all of the necessary dependencies are installed correctly.
@@ -34,7 +38,14 @@ Running the Program
 To run the program, simply execute the following command:
 
 ```bash
-python train.py
+python train.py \
+  --name mtr-en2th \
+  --epochs 100 \
+  --batch_size 2048 \
+  --max_sequence_length 64 \
+  --sentence_piece_eng_path 'spmodel/english.model' \
+  --sentence_piece_tha_path 'spmodel/thai.model'
 ```
 
 This will begin the training process for the machine translation model. During the training process, the model will learn how to translate English song lyrics to Thai. Once the training process is complete, you will be able to use the model to translate any English song lyrics to Thai.
+
