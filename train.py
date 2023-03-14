@@ -134,8 +134,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', default='mtr-model', type=str)
     parser.add_argument('--max_sequence_length', default=64, type=int)
-    parser.add_argument('--sentence_piece_eng_path', default='spmodel/english.model', type=str)
-    parser.add_argument('--sentence_piece_tha_path', default='spmodel/thai.model', type=str)
+    parser.add_argument('--sentence_piece_eng_path', default='spmodel/en.model', type=str)
+    parser.add_argument('--sentence_piece_tha_path', default='spmodel/th.model', type=str)
     parser.add_argument('--epochs', default=10, type=int)
     parser.add_argument('--batch_size', default=1024, type=int)
 

@@ -36,7 +36,8 @@ def _scb_mt_en_th_data():
     ds_df['en'].apply(lambda x: len(x) < 200) &
     ds_df['th'].apply(lambda x: len(x) < 200)]
   ds_df.loc[:, 'en'] = ds_df['en'].apply(lambda x: x.lower())
-  text_pairs = ds_df.loc[:50_000, ['en', 'th']].values.tolist()
+
+  text_pairs = ds_df.sample(50000)[['en', 'th']].values.tolist()
   return text_pairs, [], []
 
 train_pairs = []
