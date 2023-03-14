@@ -4,7 +4,6 @@ import keras_nlp
 import tensorflow as tf
 import argparse
 
-
 class Dataset:
     def __init__(self,
                  data_path,
@@ -137,6 +136,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_sequence_length', default=64, type=int)
     parser.add_argument('--sentence_piece_eng_path', default='spmodel/english.model', type=str)
     parser.add_argument('--sentence_piece_tha_path', default='spmodel/thai.model', type=str)
+    parser.add_argument('--epochs', default=10, type=int)
 
     configs = parser.parse_args()
     dataset = Dataset('dataset/translate.csv', 
@@ -155,6 +155,6 @@ if __name__ == '__main__':
         metrics=["accuracy"]
     )
 
-    model.fit(dataset.train, epochs=1, validation_data=dataset.val)
+    model.fit(dataset.train, epochs=configs.epochs, validation_data=dataset.val)
 
     model.save(configs.name)

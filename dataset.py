@@ -8,7 +8,6 @@ def write_file(split, pair_list):
     dataset['th'].append(th)
   
   print(split, 'total:', len(pair_list))
-
   pd.DataFrame(dataset,).to_csv(f'dataset/translate_{split}.csv', index=False)
 
 def _manootchecklist_data():
