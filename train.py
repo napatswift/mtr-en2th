@@ -6,11 +6,11 @@ import argparse
 
 class Dataset:
     def __init__(self,
-                 data_path,
                  max_seq_len,
                  sentence_piece_eng_path,
-                 sentence_piece_tha_path) -> None:
-
+                 sentence_piece_tha_path,
+                 batch_size) -> None:
+        self.batch_size = batch_size
         self.train_pairs = self._build_dataset('dataset/translate_train.csv')
         self.val_pairs = self._build_dataset('dataset/translate_val.csv')
         self.test_pairs = self._build_dataset('dataset/translate_test.csv')
@@ -36,12 +36,12 @@ class Dataset:
         self.val = self.make_dataset(self.val_pairs)
         self.test = self.make_dataset(self.test_pairs)
 
-    def make_dataset(self, pairs, batch_size=128):
+    def make_dataset(self, pairs,):
         eng_texts, tha_texts = zip(*pairs)
         eng_texts = list(eng_texts)
         tha_texts = list(tha_texts)
         dataset = tf.data.Dataset.from_tensor_slices((eng_texts, tha_texts))
-        dataset = dataset.batch(batch_size)
+        dataset = dataset.batch(self.batch_size)
         dataset = dataset.map(self.preprocess_batch,
                               num_parallel_calls=tf.data.AUTOTUNE)
         return dataset.shuffle(2048).prefetch(16).cache()
@@ -137,12 +137,13 @@ if __name__ == '__main__':
     parser.add_argument('--sentence_piece_eng_path', default='spmodel/english.model', type=str)
     parser.add_argument('--sentence_piece_tha_path', default='spmodel/thai.model', type=str)
     parser.add_argument('--epochs', default=10, type=int)
+    parser.add_argument('--batch_size', default=1024, type=int)
 
     configs = parser.parse_args()
-    dataset = Dataset('dataset/translate.csv', 
-                      configs.max_sequence_length,
+    dataset = Dataset(configs.max_sequence_length,
                       configs.sentence_piece_eng_path,
-                      configs.sentence_piece_tha_path)
+                      configs.sentence_piece_tha_path,
+                      configs.batch_size)
     model_builder = ModelBuilder()
     eng_vocab_size = dataset.eng_tokenizer.vocabulary_size()
     tha_vocab_size = dataset.tha_tokenizer.vocabulary_size()
