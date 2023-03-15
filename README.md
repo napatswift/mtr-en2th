@@ -6,7 +6,7 @@ mtr-en2th is a project that uses transforms to perform machine translation of En
 
 You can try the machine translation model in action at the following [🤗 space](https://huggingface.co/spaces/napatswift/en2th/tree/main?logs=container)
 
-## Data Preparation
+## Data Preparation1``````
 
 The scb-mt-en-th-2020 dataset can be downloaded using the following command:
 
@@ -71,8 +71,8 @@ python train.py \
   --epochs 100 \
   --batch_size 2048 \
   --max_sequence_length 64 \
-  --sentence_piece_eng_path 'spmodel/english.model' \
-  --sentence_piece_tha_path 'spmodel/thai.model'
+  --sentence_piece_eng_path 'spmodel/en.model' \
+  --sentence_piece_tha_path 'spmodel/th.model'
 ```
 
 
