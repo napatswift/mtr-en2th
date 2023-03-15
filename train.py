@@ -78,6 +78,7 @@ class ModelBuilder:
             embedding_dim=256,
             head_num=8,
     ):
+        layer_nums = 4
         # Encoder
         encoder_inputs = tf.keras.Input(
             shape=(None,), dtype="int64", name="encoder_inputs")
@@ -89,9 +90,12 @@ class ModelBuilder:
             mask_zero=True,
         )(encoder_inputs)
 
-        encoder_outputs = keras_nlp.layers.TransformerEncoder(
-            intermediate_dim=intermediate_dim, num_heads=head_num
-        )(inputs=x)
+        for _ in range(layer_nums):
+            x = keras_nlp.layers.TransformerEncoder(
+                intermediate_dim=intermediate_dim, num_heads=head_num
+            )(inputs=x)
+
+        encoder_outputs = x
         encoder = tf.keras.Model(encoder_inputs, encoder_outputs)
 
         # Decoder
@@ -110,15 +114,16 @@ class ModelBuilder:
         x = keras_nlp.layers.TransformerDecoder(
             intermediate_dim=intermediate_dim, num_heads=head_num
         )(decoder_sequence=x, encoder_sequence=encoded_seq_inputs)
+
         x = tf.keras.layers.Dropout(0.5)(x)
+
         decoder_outputs = tf.keras.layers.Dense(
             target_vocab_size, activation="softmax")(x)
         decoder = tf.keras.Model([
             decoder_inputs,
             encoded_seq_inputs,
-        ],
-            decoder_outputs,
-        )
+        ], decoder_outputs,)
+
         decoder_outputs = decoder([decoder_inputs, encoder_outputs])
 
         transformer = tf.keras.Model(
@@ -132,12 +137,25 @@ class ModelBuilder:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--name', default='mtr-model', type=str)
-    parser.add_argument('--max_sequence_length', default=64, type=int)
-    parser.add_argument('--sentence_piece_eng_path', default='spmodel/en.model', type=str)
-    parser.add_argument('--sentence_piece_tha_path', default='spmodel/th.model', type=str)
-    parser.add_argument('--epochs', default=10, type=int)
-    parser.add_argument('--batch_size', default=1024, type=int)
+    parser.add_argument('--name',
+                        help='Name of the machine translation model. Default is mtr-model.',
+                        default='mtr-model', type=str)
+    parser.add_argument('--max_sequence_length',
+                        help='Maximum sequence length for input text. Default is 64.',
+                        default=64, type=int)
+    parser.add_argument('--sentence_piece_eng_path',
+                        help='Path to the English sentencepiece model. Default is spmodel/en.model.',
+                        default='spmodel/en.model', type=str)
+    parser.add_argument('--sentence_piece_tha_path',
+                        help='Path to the Thai sentencepiece model. Default is spmodel/th.model.',
+                        default='spmodel/th.model', type=str)
+    parser.add_argument('--epochs',
+                        help='Number of epochs to train the machine translation model. Default is 10.',
+                        default=10, type=int)
+    parser.add_argument('--batch_size',
+                        help='Batch size for training the machine translation model. Default is 1024.',
+                        default=1024, type=int)
+
 
     configs = parser.parse_args()
     dataset = Dataset(configs.max_sequence_length,
@@ -150,7 +168,7 @@ if __name__ == '__main__':
     model = model_builder.build_model(eng_vocab_size, tha_vocab_size, configs.max_sequence_length)
 
     cp_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath='saved_model/'+parser.name+'/cp-{epoch:04d}.ckpt', 
+        filepath='saved_model/'+configs.name+'/cp-{epoch:04d}.ckpt', 
         verbose=1, 
         save_weights_only=True,
         save_freq=10*configs.batch_size)

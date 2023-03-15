@@ -4,7 +4,7 @@ mtr-en2th is a project that uses transforms to perform machine translation of En
 
 ## Try Now!
 
-We have a 🤗 space, you can try translate lyrics now at this
+We have a 🤗 space, you can try translate lyrics now at [this](https://huggingface.co/spaces/napatswift/en2th/tree/main?logs=container)
 
 ## Getting Started
 
