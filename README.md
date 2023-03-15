@@ -151,4 +151,4 @@ Here's the breakdown of the parameters used in this command:
 
 After running this command, the program will output the predicted Thai translation for each input English lyric in the test dataset. You can then use various metrics such as *METEOR* score to evaluate the quality of the translations.
 
-# Contributions are welcomed
+**Contributions are welcomed**
