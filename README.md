@@ -46,7 +46,9 @@ This command will install all the necessary dependencies for the mtr-en2th proje
 
 ### Data Preparation
 
-The scb-mt-en-th-2020 dataset can be downloaded using the following command:
+For this project, we used web scraping to collect English and Thai song lyrics from music translation website. Specifically, we used the Python package Scrapy to build a web spider that crawls the websites and extracts the lyrics data. For more infomation see the [🕷️ spider](spider).
+
+And another dataset is the scb-mt-en-th-2020 dataset can be downloaded using the following command:
 
 ```bash
 wget https://github.com/vistec-AI/thai2nmt/releases/download/scb-mt-en-th-2020_v1.0/en-th.merged_stratified.train.csv -P dataset
