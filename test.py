@@ -5,6 +5,7 @@ import pandas as pd
 import deepcut
 import argparse
 from tensorflow import keras
+import numpy as np
 
 MAX_SEQUENCE_LENGTH = 54
 
@@ -53,26 +54,31 @@ if __name__ == '__main__':
     tha_tokenizer = keras_nlp.tokenizers.SentencePieceTokenizer(
             configs.spm_tha)
 
-    test_eng_texts = ds_df['en'].tolist()
+    test_eng_texts = ds_df['en'].astype(str).tolist()
     test_tha_texts = ds_df['th'].tolist()
     metric_scores = []
-    for ix in range(len(test_eng_texts)):
-        input_sentence = test_eng_texts[ix]
-        translated = decode_sequences(tf.constant([input_sentence]))
-        translated = translated.numpy()[0].decode("utf-8")
-        translated = (
-            translated
-            .replace("<pad>", "")
-            .replace("<s>", "")
-            .replace("</s>", "")
-            .replace("⁇", "")
-            .strip()
-        )
+    batch_size = 1000
+    for ix in range(int(len(test_eng_texts)//batch_size)):
+        input_sentence = test_eng_texts[ix*batch_size:ix*batch_size+batch_size]
+        print(input_sentence)
+        translated = decode_sequences(tf.constant(input_sentence))
+        translated_list = []
+        for translated in translated.numpy():
+          translated = translated.decode("utf-8")
+          translated = (
+              translated
+              .replace("<pad>", "")
+              .replace("<s>", "")
+              .replace("</s>", "")
+              .replace("⁇", "")
+              .strip()
+          )
 
-        predictions = [" ".join(deepcut.tokenize(translated))]
-        references = [" ".join(deepcut.tokenize(test_tha_texts[ix]))]
-        results = meteor.compute(predictions=predictions, references=references)
-        metric_scores.append(results['meteor'])
+          predictions = [" ".join(deepcut.tokenize(translated))]
+          references = [" ".join(deepcut.tokenize(test_tha_texts[ix]))]
+          results = meteor.compute(predictions=predictions, references=references)
+          metric_scores.append(results['meteor'])
         print(round(results['meteor'], 2))
-        print()
+        print(np.mean(metric_scores))
+    print(np.mean(metric_scores))
     
